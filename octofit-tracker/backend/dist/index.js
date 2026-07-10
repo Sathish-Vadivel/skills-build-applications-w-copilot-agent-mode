@@ -5,16 +5,62 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const database_1 = __importDefault(require("./config/database"));
+const models_1 = require("./models");
 const app = (0, express_1.default)();
 const port = Number(process.env.PORT ?? 8000);
+const codespaceName = process.env.CODESPACE_NAME;
+const baseUrl = codespaceName
+    ? `https://${codespaceName}-8000.app.github.dev`
+    : 'http://localhost:8000';
 app.use(express_1.default.json());
 app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok' });
+    res.json({ status: 'ok', baseUrl });
+});
+app.get(['/api/users', '/api/users/'], async (_req, res) => {
+    const users = await models_1.UserModel.find({});
+    res.json(users);
+});
+app.post(['/api/users', '/api/users/'], async (req, res) => {
+    const user = await models_1.UserModel.create(req.body);
+    res.status(201).json(user);
+});
+app.get(['/api/teams', '/api/teams/'], async (_req, res) => {
+    const teams = await models_1.TeamModel.find({});
+    res.json(teams);
+});
+app.post(['/api/teams', '/api/teams/'], async (req, res) => {
+    const team = await models_1.TeamModel.create(req.body);
+    res.status(201).json(team);
+});
+app.get(['/api/activities', '/api/activities/'], async (_req, res) => {
+    const activities = await models_1.ActivityModel.find({});
+    res.json(activities);
+});
+app.post(['/api/activities', '/api/activities/'], async (req, res) => {
+    const activity = await models_1.ActivityModel.create(req.body);
+    res.status(201).json(activity);
+});
+app.get(['/api/leaderboard', '/api/leaderboard/'], async (_req, res) => {
+    const entries = await models_1.LeaderboardEntryModel.find({}).sort({ score: -1 });
+    res.json(entries);
+});
+app.post(['/api/leaderboard', '/api/leaderboard/'], async (req, res) => {
+    const entry = await models_1.LeaderboardEntryModel.create(req.body);
+    res.status(201).json(entry);
+});
+app.get(['/api/workouts', '/api/workouts/'], async (_req, res) => {
+    const workouts = await models_1.WorkoutModel.find({});
+    res.json(workouts);
+});
+app.post(['/api/workouts', '/api/workouts/'], async (req, res) => {
+    const workout = await models_1.WorkoutModel.create(req.body);
+    res.status(201).json(workout);
 });
 (0, database_1.default)()
     .then(() => {
-    app.listen(port, () => {
+    app.listen(port, '0.0.0.0', () => {
         console.log(`Backend listening on port ${port}`);
+        console.log(`API base URL: ${baseUrl}`);
     });
 })
     .catch((error) => {
